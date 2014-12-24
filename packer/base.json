@@ -1,0 +1,35 @@
+{
+    "variables": {
+        "aws_vpc_id": "{{env `AWS_VPC_ID`}}",
+        "aws_subnet_id": "{{env `AWS_SUBNET_ID`}}"
+    },
+    "builders": [
+        {
+            "type"          : "amazon-ebs",
+            "region"        : "us-east-1",
+            "source_ami"    : "ami-9eaa1cf6",
+            "instance_type" : "t2.micro",
+            "ssh_username"  : "ubuntu",
+            "user_data_file": "scripts/user_data.sh",
+            "vpc_id"        : "{{user `aws_vpc_id`}}",
+            "subnet_id"     : "{{user `aws_subnet_id`}}",
+            "ami_name"      : "mesos-ceph {{timestamp}}",
+            "ami_groups"    : "all"
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "scripts": [
+                "scripts/common.sh",
+                "scripts/ntp.sh",
+                "scripts/ceph.sh",
+                "scripts/ceph-deploy.sh",
+                "scripts/mesos.sh",
+                "scripts/marathon.sh",
+                "scripts/docker.sh",
+                "scripts/clean.sh"
+            ]
+        }
+    ]
+}

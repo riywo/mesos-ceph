@@ -1,0 +1,54 @@
+#!/usr/bin/env awk -F, -f
+BEGIN {
+    tf = ARGV[1]
+    ARGC--
+    say     = "1;92m" # Bold & Light green
+    message = "92m"   # Light green
+    error   = "31m"   # Red
+}
+
+function output(string, format) {
+    gsub(/\\n/, "\n", string)
+    gsub(/\\r/, "\r", string)
+    gsub(/%!\(PACKER_COMMA\)/, ",", string)
+    print "\033[" format string "\033[0m"
+    fflush(stdout)
+}
+
+$3 == "ui" && $4 == "say"{
+    if ($5 ~ /^\\n/) {
+        say = "0m"
+    }
+    output($5, say)
+    next
+}
+
+$3 == "ui" && $4 == "message" {
+    output($5, message)
+    next
+}
+
+$3 == "ui" && $4 == "error" {
+    output($5, error)
+    exit 1
+}
+
+$2 == "amazon-ebs" && $5 == "id" {
+    split($6, a, ":")
+    amis[a[1]] = a[2]
+    next
+}
+
+$3 == "ui" {
+    print
+}
+
+END {
+    print "variable \"ami\" {"                   >  tf
+    print "	default = {"                     >> tf
+    for (i in amis) {
+    print "		" i " = \"" amis[i] "\"" >> tf
+    }
+    print "	}"                               >> tf
+    print "}"                                    >> tf
+}
